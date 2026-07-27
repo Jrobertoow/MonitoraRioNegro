@@ -1,0 +1,7 @@
+bin/
+relatorios/
+*.class
+*.tmp
+sources.txt
+.vscode/
+.idea/
