@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interface web do projeto Monitora RioNegro para acompanhamento de níveis de cheia e seca.">
+    <title>MONITORA RIONEGRO</title>
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <img src="assets/logo.svg" alt="Logotipo Monitora RioNegro">
+                <div>
+                    <strong>MONITORA</strong>
+                    <span>RIONEGRO</span>
+                </div>
+            </div>
+
+            <nav class="navigation" aria-label="Navegação principal">
+                <button class="nav-item active" data-section="dashboard">
+                    <span class="nav-icon">◫</span> Painel
+                </button>
+                <button class="nav-item" data-section="estacoes">
+                    <span class="nav-icon">⌖</span> Estações
+                </button>
+                <button class="nav-item" data-section="medicoes">
+                    <span class="nav-icon">≋</span> Medições
+                </button>
+                <button class="nav-item" data-section="historico">
+                    <span class="nav-icon">↗</span> Histórico
+                </button>
+                <button class="nav-item" data-section="comparacao">
+                    <span class="nav-icon">⇄</span> Comparação
+                </button>
+                <button class="nav-item" data-section="alertas">
+                    <span class="nav-icon">!</span> Alertas
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p>Projeto educacional em Java e tecnologias web.</p>
+                <small>Dados armazenados no navegador.</small>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <button class="menu-toggle" id="menuToggle" aria-label="Abrir ou fechar menu">☰</button>
+                <div>
+                    <p class="eyebrow">MONITORAMENTO DE CHEIA E SECA</p>
+                    <h1 id="pageTitle">PAINEL GERAL</h1>
+                </div>
+                <div class="topbar-actions">
+                    <button class="button button-ghost" id="loadDemoButton">Carregar demonstração</button>
+                    <button class="button button-primary" id="quickMeasurementButton">+ Nova medição</button>
+                </div>
+            </header>
+
+            <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+            <section class="page-section active" id="dashboard">
+                <div class="hero-card">
+                    <div class="hero-content">
+                        <span class="hero-badge">AMAZÔNIA + TECNOLOGIA</span>
+                        <h2>ACOMPANHE O COMPORTAMENTO DO RIO NEGRO</h2>
+                        <p>Cadastre estações, registre medições, analise tendências e identifique situações de atenção.</p>
+                    </div>
+                    <div class="hero-river" aria-hidden="true">
+                        <span class="river-line line-one"></span>
+                        <span class="river-line line-two"></span>
+                        <span class="river-line line-three"></span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <article class="stat-card">
+                        <span class="stat-label">Estações cadastradas</span>
+                        <strong id="statStations">0</strong>
+                        <small>Pontos de monitoramento</small>
+                    </article>
+                    <article class="stat-card">
+                        <span class="stat-label">Medições registradas</span>
+                        <strong id="statMeasurements">0</strong>
+                        <small>Histórico armazenado</small>
+                    </article>
+                    <article class="stat-card">
+                        <span class="stat-label">Nível médio</span>
+                        <strong id="statAverage">0,00 m</strong>
+                        <small>Média de todas as medições</small>
+                    </article>
+                    <article class="stat-card status-card" id="currentStatusCard">
+                        <span class="stat-label">Situação mais recente</span>
+                        <strong id="statStatus">Sem dados</strong>
+                        <small id="statStatusDetail">Cadastre uma medição</small>
+                    </article>
+                </div>
+
+                <div class="dashboard-grid">
+                    <article class="panel chart-panel">
+                        <div class="panel-header">
+                            <div>
+                                <span class="panel-kicker">Evolução</span>
+                                <h3>Nível do rio</h3>
+                            </div>
+                            <select id="dashboardStationFilter" aria-label="Filtrar gráfico por estação"></select>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="levelChart" width="960" height="360" aria-label="Gráfico de evolução do nível do rio"></canvas>
+                            <div class="empty-state compact" id="chartEmptyState">
+                                <strong>Sem dados para o gráfico</strong>
+                                <span>Registre medições para visualizar a evolução.</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="panel latest-panel">
+                        <div class="panel-header">
+                            <div>
+                                <span class="panel-kicker">Último registro</span>
+                                <h3>Situação atual</h3>
+                            </div>
+                        </div>
+                        <div id="latestMeasurement" class="latest-measurement empty-state">
+                            <strong>Nenhuma medição encontrada</strong>
+                            <span>Use o botão “Nova medição” para começar.</span>
+                        </div>
+                    </article>
+                </div>
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-kicker">Visão rápida</span>
+                            <h3>Medições mais recentes</h3>
+                        </div>
+                        <button class="text-button" data-go="historico">Ver histórico completo →</button>
+                    </div>
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Estação</th>
+                                    <th>Nível</th>
+                                    <th>Chuva</th>
+                                    <th>Temperatura</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentMeasurementsTable"></tbody>
+                        </table>
+                    </div>
+                </article>
+            </section>
+
+            <section class="page-section" id="estacoes">
+                <div class="section-toolbar">
+                    <div>
+                        <p>Gerencie os pontos utilizados para registrar os níveis do rio.</p>
+                    </div>
+                    <button class="button button-primary" id="newStationButton">+ Cadastrar estação</button>
+                </div>
+
+                <div class="cards-grid" id="stationCards"></div>
+                <div class="empty-state large" id="stationsEmptyState">
+                    <strong>Nenhuma estação cadastrada</strong>
+                    <span>Cadastre o primeiro ponto de monitoramento.</span>
+                </div>
+            </section>
+
+            <section class="page-section" id="medicoes">
+                <div class="section-toolbar">
+                    <div>
+                        <p>Registre diariamente o nível, chuva, temperatura e observações.</p>
+                    </div>
+                    <button class="button button-primary" id="newMeasurementButton">+ Registrar medição</button>
+                </div>
+
+                <article class="panel">
+                    <div class="filters-grid">
+                        <label>
+                            Estação
+                            <select id="measurementStationFilter"></select>
+                        </label>
+                        <label>
+                            Estado
+                            <select id="measurementStatusFilter">
+                                <option value="">Todos</option>
+                                <option value="SECA">Seca</option>
+                                <option value="NORMAL">Normal</option>
+                                <option value="ATENCAO">Atenção</option>
+                                <option value="CHEIA">Cheia</option>
+                                <option value="EMERGENCIA">Emergência</option>
+                            </select>
+                        </label>
+                        <label>
+                            Buscar
+                            <input type="search" id="measurementSearch" placeholder="Data, estação ou observação">
+                        </label>
+                    </div>
+
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Estação</th>
+                                    <th>Nível</th>
+                                    <th>Chuva</th>
+                                    <th>Temperatura</th>
+                                    <th>Estado</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="measurementsTable"></tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state compact" id="measurementsEmptyState">
+                        <strong>Nenhuma medição encontrada</strong>
+                        <span>Altere os filtros ou registre uma nova medição.</span>
+                    </div>
+                </article>
+            </section>
+
+            <section class="page-section" id="historico">
+                <div class="section-toolbar">
+                    <div>
+                        <p>Visualize a variação entre as medições de uma estação.</p>
+                    </div>
+                    <button class="button button-secondary" id="exportCsvButton">Exportar CSV</button>
+                </div>
+
+                <article class="panel">
+                    <div class="filters-grid two-columns">
+                        <label>
+                            Estação para análise
+                            <select id="historyStationFilter"></select>
+                        </label>
+                        <label>
+                            Ordenação
+                            <select id="historyOrderFilter">
+                                <option value="desc">Mais recente primeiro</option>
+                                <option value="asc">Mais antigo primeiro</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="history-summary" id="historySummary"></div>
+                    <div class="chart-wrap history-chart-wrap">
+                        <canvas id="historyChart" width="960" height="360" aria-label="Gráfico histórico de uma estação"></canvas>
+                    </div>
+
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Nível</th>
+                                    <th>Variação</th>
+                                    <th>Chuva</th>
+                                    <th>Temperatura</th>
+                                    <th>Estado</th>
+                                    <th>Observação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTable"></tbody>
+                        </table>
+                    </div>
+                </article>
+            </section>
+
+            <section class="page-section" id="comparacao">
+                <div class="section-toolbar">
+                    <div>
+                        <p>Compare as medições mais recentes de duas estações.</p>
+                    </div>
+                </div>
+
+                <article class="panel comparison-panel">
+                    <div class="comparison-selectors">
+                        <label>
+                            Primeira estação
+                            <select id="compareStationA"></select>
+                        </label>
+                        <span class="versus">VS</span>
+                        <label>
+                            Segunda estação
+                            <select id="compareStationB"></select>
+                        </label>
+                        <button class="button button-primary" id="compareButton">Comparar</button>
+                    </div>
+                    <div id="comparisonResult" class="empty-state large">
+                        <strong>Selecione duas estações</strong>
+                        <span>O sistema usará a medição mais recente de cada uma.</span>
+                    </div>
+                </article>
+            </section>
+
+            <section class="page-section" id="alertas">
+                <div class="section-toolbar">
+                    <div>
+                        <p>Alertas são gerados automaticamente para estados críticos.</p>
+                    </div>
+                    <button class="button button-ghost" id="clearAlertsButton">Limpar alertas</button>
+                </div>
+                <div class="alerts-list" id="alertsList"></div>
+                <div class="empty-state large" id="alertsEmptyState">
+                    <strong>Nenhum alerta hidrológico</strong>
+                    <span>Os registros críticos aparecerão aqui automaticamente.</span>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <dialog class="modal" id="stationModal">
+        <form method="dialog" id="stationForm" novalidate>
+            <div class="modal-header">
+                <div>
+                    <span class="panel-kicker">Estação de monitoramento</span>
+                    <h2 id="stationModalTitle">Cadastrar estação</h2>
+                </div>
+                <button class="icon-button" value="cancel" aria-label="Fechar">×</button>
+            </div>
+            <input type="hidden" id="stationId">
+            <div class="form-grid">
+                <label>
+                    Nome da estação
+                    <input id="stationName" maxlength="100" required placeholder="Ex.: Porto de Manaus">
+                </label>
+                <label>
+                    Cidade
+                    <input id="stationCity" maxlength="100" required placeholder="Ex.: Manaus">
+                </label>
+                <label class="full-width">
+                    Localização ou referência
+                    <input id="stationLocation" maxlength="180" required placeholder="Ex.: Centro, margem esquerda do Rio Negro">
+                </label>
+                <label class="full-width">
+                    Tipo de classificação
+                    <select id="stationClassifier">
+                        <option value="PADRAO">Padrão demonstrativo</option>
+                        <option value="PERSONALIZADO">Faixas personalizadas</option>
+                    </select>
+                </label>
+            </div>
+            <div class="custom-levels" id="customLevels">
+                <label>Limite de seca <input id="dryLimit" type="number" min="0" step="0.01" value="15"></label>
+                <label>Limite de atenção <input id="attentionLimit" type="number" min="0" step="0.01" value="27"></label>
+                <label>Limite de cheia <input id="floodLimit" type="number" min="0" step="0.01" value="28"></label>
+                <label>Limite de emergência <input id="emergencyLimit" type="number" min="0" step="0.01" value="29"></label>
+            </div>
+            <p class="form-error" id="stationFormError"></p>
+            <div class="modal-actions">
+                <button class="button button-ghost" value="cancel">Cancelar</button>
+                <button class="button button-primary" type="submit" value="default">Salvar estação</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog class="modal" id="measurementModal">
+        <form method="dialog" id="measurementForm" novalidate>
+            <div class="modal-header">
+                <div>
+                    <span class="panel-kicker">Registro diário</span>
+                    <h2 id="measurementModalTitle">Registrar medição</h2>
+                </div>
+                <button class="icon-button" value="cancel" aria-label="Fechar">×</button>
+            </div>
+            <input type="hidden" id="measurementId">
+            <div class="form-grid">
+                <label class="full-width">
+                    Estação
+                    <select id="measurementStation" required></select>
+                </label>
+                <label>
+                    Data da medição
+                    <input id="measurementDate" type="date" required>
+                </label>
+                <label>
+                    Nível do rio (m)
+                    <input id="measurementLevel" type="number" min="0" step="0.01" required placeholder="28,20">
+                </label>
+                <label>
+                    Chuva em 24 h (mm)
+                    <input id="measurementRain" type="number" min="0" step="0.01" required placeholder="65">
+                </label>
+                <label>
+                    Temperatura (°C)
+                    <input id="measurementTemperature" type="number" min="-20" max="60" step="0.1" required placeholder="29">
+                </label>
+                <label class="full-width">
+                    Observação
+                    <textarea id="measurementObservation" maxlength="300" rows="3" placeholder="Descreva as condições observadas"></textarea>
+                </label>
+            </div>
+            <p class="form-error" id="measurementFormError"></p>
+            <div class="modal-actions">
+                <button class="button button-ghost" value="cancel">Cancelar</button>
+                <button class="button button-primary" type="submit" value="default">Salvar medição</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog class="modal small-modal" id="confirmModal">
+        <form method="dialog" id="confirmForm">
+            <div class="modal-header">
+                <div>
+                    <span class="panel-kicker">Confirmação</span>
+                    <h2 id="confirmTitle">Remover registro?</h2>
+                </div>
+                <button class="icon-button" value="cancel" aria-label="Fechar">×</button>
+            </div>
+            <p id="confirmMessage">Esta ação não poderá ser desfeita.</p>
+            <div class="modal-actions">
+                <button class="button button-ghost" value="cancel">Cancelar</button>
+                <button class="button button-danger" id="confirmActionButton" value="default">Confirmar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="app.js"></script>
+</body>
+</html>
